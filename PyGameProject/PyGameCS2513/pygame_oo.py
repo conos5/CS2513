@@ -3,7 +3,6 @@ import pygame
 
 
 class MyGame(object):
-
     def __init__(self):
         
         pygame.init()
@@ -13,7 +12,7 @@ class MyGame(object):
         
         self._screen = pygame.display.set_mode(self._size)
 
-        self._ballview = pygame.image.load("intro_ball.gif")
+        self._ballview = pygame.image.load("pygame_lab1/intro_ball.gif")
         self._ballmodel = BallState(160, 120, self._width, 3)
 
     def rungame(self):
@@ -51,17 +50,14 @@ class BallState(object):
         return self._yPos
 
     def handleMoveLeft(self):
-        
         if self._xPos + self._ballchange < self._maxXPos:
             self._xPos -= self._ballchange
 
     def handleMoveRight(self):
-       
         if self._xPos - self._ballchange > 0:
             self._xPos += self._ballchange
 
     def handleStopMove(self):
-        
         self._xPos = self._xPos
 
 if __name__ == "__main__":
