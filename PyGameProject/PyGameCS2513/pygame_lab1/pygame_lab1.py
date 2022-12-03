@@ -20,8 +20,7 @@ class Screen:
         self.__width = width
         self.__height = height
         self.__size = self.__width, self.__height
-        __display = pygame.display.set_mode(self.__size)
-
+    # GETTERS AND SETTERS
     @property
     def size(self):
         return self.__size
@@ -58,7 +57,7 @@ class Screen:
 
 
 class Ball:
-    # __speed = [2, 2]  # [0] = horizontal speed, [1] = vertical speed
+    # __speed = [2, 2]  # [0] = horizontal _speed, [1] = vertical _speed
     __speed = ClassVar[list[int, int]]
     # __ball = pygame.image.load("intro_ball.gif")
     __ball_img = ClassVar[str]  # to operate upon file give and load file
@@ -91,16 +90,13 @@ class Ball:
 
 
 class GameSetup:
-    # __game_ball = type(Ball)
-    # __game_screen = type(Screen)
-
     def __init__(self, ball_speed, ball_image_file_name, screen_colour, screen_width, screen_height):
         self.__game_ball = Ball(ball_speed, ball_image_file_name)
         self.__ballrect = self.__game_ball.ball_img.get_rect()
         self.__game_screen = Screen(screen_colour, screen_width, screen_height)
         self.__display = pygame.display.set_mode(self.__game_screen.size)
         self.start()
-
+        
     def start(self):
         while True:
             for event in pygame.event.get():
@@ -115,7 +111,7 @@ class GameSetup:
 
             self.__display.fill(self.__game_screen.bgcolour)
             self.__display.blit(self.__game_ball.ball_img, self.__ballrect)
-            pygame.display.flip()
+            pygame.display.update()
 
 
 if __name__ == '__main__':

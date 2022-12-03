@@ -1,13 +1,14 @@
-import sys, pygame
+import sys
+import pygame
 pygame.init()
 
-size = width, height = 320, 240
-#speed = [2, 2]
+size = width, height = 600, 400
+#_speed = [2, 2]
 black = 0, 0, 0
 
 screen = pygame.display.set_mode(size)
 
-ball = pygame.image.load("intro_ball.gif")
+ball = pygame.image.load("pygame_lab1/intro_ball.gif")
 #ballrect = ball.get_rect()
 
 ballpos = 160
@@ -29,11 +30,11 @@ while True:
         if event.type == pygame.KEYUP:
             ballchange = 0
 
-    #ballrect = ballrect.move(speed)
+    #ballrect = ballrect.move(_speed)
     #if ballrect.left < 0 or ballrect.right > width:
-    #    speed[0] = -speed[0]
+    #    _speed[0] = -_speed[0]
     #if ballrect.top < 0 or ballrect.bottom > height:
-    #    speed[1] = -speed[1]
+    #    _speed[1] = -_speed[1]
 
     if ballpos + ballchange > 0 and ballpos + ballchange < width - 100:
         ballpos += ballchange

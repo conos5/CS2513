@@ -13,11 +13,12 @@ class MyGame(object):
         self._screen = pygame.display.set_mode(self._size)
 
         self._ballview = pygame.image.load("pygame_lab1/intro_ball.gif")
-        self._ballmodel = BallState(160, 120, self._width, 3)
+        self._ballmodel = BallState(160, 120, self._width, 5)
 
     def rungame(self):
         
         while True:
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: 
                     sys.exit()

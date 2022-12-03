@@ -8,7 +8,7 @@ clock = pygame.time.Clock()
 wood_bg = pygame.image.load('GameAssets/Wood_BG.png')
 land_bg = pygame.image.load('GameAssets/Land_BG.png')
 
-while True:  # speed of update i.e frame rate is not set!
+while True:  # _speed of update i.e frame rate is not set!
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
