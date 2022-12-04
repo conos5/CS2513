@@ -49,8 +49,6 @@ class Screen(object):
         self.__bg_colour = bg_colour
 
 
-# TODO: Collision function
-#   define as method in a class and use inheritance and polymorphism to execute
 def collide(obj1, obj2):  # -> if returns anything other than None, there is an overlap
     """
     function to determine whether object 1 & 2 collide
@@ -63,7 +61,6 @@ def collide(obj1, obj2):  # -> if returns anything other than None, there is an 
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y))
 
 
-# TODO: Laser draw speed needs to be fixed
 class Laser(object):
     def __init__(self, pos: tuple[int, int], image_file: str):
         # self._image = pygame.Surface((4, 20))  # width 4, height 20
@@ -192,6 +189,47 @@ class Enemy(Ship):
         """
         window.blit(self._view, (self._x_pos, self._y_pos))
 
+    def reloading(self):
+        """
+        Reload/Cooldown function
+        :return: if player can shoot
+        """
+        if not self._can_shoot:
+            current_blast_time = pygame.time.get_ticks()
+            if current_blast_time - self._blast_time >= (self._blast_cooldown * 1.5):
+                # if we have elapsed the x ms for our cooldown...
+                self._can_shoot = True
+
+    def blast_laser(self):
+        """
+        Shoot laser function
+        :return: none
+        """
+        self._blasts_array.append(Laser((self._x_pos - 20, self._y_pos - 40), self._laser_image))
+
+    def move_lasers(self, velocity, entities):
+        """
+        Moves lasers on screen
+        :param velocity: speed of lasers
+        :param entities: for checking collisions, namely player
+        :return: none
+        """
+        i = 0
+        while i < len(self._blasts_array):
+            self._blasts_array[i].movement(velocity)
+            if self._blasts_array[i].offscreen(self._max_y_pos):  # if laser goes off-screen, delete laser from array
+                self._blasts_array.remove(self._blasts_array[i])
+            i += 1
+        for laser in self._blasts_array:
+            laser.movement(velocity)  # velocity will be different for enemies and players
+            if laser.offscreen(self._max_y_pos):  # if laser goes off-screen, delete laser from array
+                self._blasts_array.remove(laser)
+                # print(self._blasts_array())
+            for entity in entities:
+                if laser.collision(entity):  # if laser collides with an object, remove from array
+                    entity.health -= 1
+                    if laser in self._blasts_array:
+                        self._blasts_array.remove(laser)
     # GETTERS
     @property
     def x_pos(self):
@@ -286,11 +324,7 @@ class Player(Ship):
         Shoot laser function
         :return: none
         """
-        # self._blast_time = pygame.time.get_ticks()  # for testing
-        # print(f"laser beam {self._blast_time}, {str(len(self._blasts_array))}")
         self._blasts_array.append(Laser((self._x_pos - 20, self._y_pos - 40), self._laser_image))
-        # rect gives x position of laser point of instantiation
-        # reset cooldown
 
     def reloading(self):
         """
@@ -303,21 +337,13 @@ class Player(Ship):
                 # if we have elapsed the x ms for our cooldown...
                 self._can_shoot = True
 
-    # def draw(self, window):
-    #     window.blit(self._view, (self.x, self.y))  # draw ship
-    #     for laser in self._blasts_array:  # draw laser(/s)
-    #         laser.draw(window)
-
-    # TODO: where should this be called?
-    #   work on this function once we have image working
-    def move_lasers(self, velocity, objs):
+    def move_lasers(self, velocity, entities):
         """
         Moves lasers on screen
         :param velocity: speed of lasers
-        :param objs: for checking collisions
+        :param entities: for checking collisions
         :return: none
         """
-        # self.cooldown()
         i = 0
         while i < len(self._blasts_array):
             self._blasts_array[i].movement(velocity)
@@ -329,9 +355,9 @@ class Player(Ship):
             if laser.offscreen(self._max_y_pos):  # if laser goes off-screen, delete laser from array
                 self._blasts_array.remove(laser)
                 # print(self._blasts_array())
-            for obj in objs:
-                if laser.collision(obj):  # if laser collides with an object, remove from array
-                    obj.health -= 1
+            for entity in entities:
+                if laser.collision(entity):  # if laser collides with an object, remove from array
+                    entity.health -= 1
                     if laser in self._blasts_array:
                         self._blasts_array.remove(laser)
 
@@ -369,7 +395,6 @@ class Player(Ship):
         return self._rect
 
 
-# TODO: add on-screen text for lives and level
 # TODO: add music and sound effects for lasers, collisions and game over
 class MainGame(object):
     def __init__(self, blast_cooldown: int, sprite_img_file_name: dict, laser_img_file_name: dict,
@@ -394,7 +419,6 @@ class MainGame(object):
         self._level = 0
         self._lives = 5
         self._blast_cooldown = blast_cooldown
-        self.laser_velocity = 3
         self._speed = speed
         self._health = health
 
@@ -413,6 +437,7 @@ class MainGame(object):
 
         # Clock for FPS
         self._clock = pygame.time.Clock()
+        self._playing = True
 
     def window_draw(self, window):
         """
@@ -429,7 +454,8 @@ class MainGame(object):
 
         for laser in self._player.blasts_array:  # draw laser(/s)
             laser.draw(window)
-            self._player.move_lasers(self.laser_velocity, self._enemies_array)
+
+        self._player.move_lasers(self._speed["laser"], self._enemies_array)
 
         for enemy in self._enemies_array:
             enemy.draw(window)
@@ -442,7 +468,7 @@ class MainGame(object):
         :return: none
         """
         FPS = 60  # let's set our FPS to 60; standard FPS rate for Video Games
-        while True:
+        while self._playing:
             self._clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -453,7 +479,7 @@ class MainGame(object):
             self._player.update()
             if len(self._enemies_array) == 0:
                 self._level += 1
-                self.wave_length += 5
+                self.wave_length += 1
                 for i in range(self.wave_length):
                     rand_x = random.randrange(20, self._screen_width - 60)
                     rand_y = random.randrange(-1000, -100)
@@ -462,13 +488,23 @@ class MainGame(object):
                                   self._speed["enemy"], self._health["enemy"])
                     self._enemies_array.append(enemy)
             for enemy in self._enemies_array[:]:
-                enemy.move(self._speed["enemy"])
-                # print(len(self._enemies_array))
-                if enemy.y_pos > enemy.max_y_pos:
-                    self._lives -= 1
-                    # print(self._lives)
+                if enemy.health > 0:
+                    enemy.move(self._speed["enemy"]+(0.2*self._level))
+                    # print(len(self._enemies_array))
+                    if enemy.y_pos > enemy.max_y_pos:
+                        self._lives -= 1
+                        # print(self._lives)
+                        self._enemies_array.remove(enemy)
+                        print(len(self._enemies_array))
+                    elif collide(enemy, self._player):
+                        self._lives -= 1
+                        self._player.health -= 1
+                        self._enemies_array.remove(enemy)
+                else:
                     self._enemies_array.remove(enemy)
-                    print(len(self._enemies_array))
+            if self._lives == 0:
+                self._playing = False  # crashes game... want to make an end game screen
+
             self.window_draw(self._display)
 
 
@@ -484,11 +520,13 @@ if __name__ == "__main__":
     speed_map = {
         "player": 5,
         "enemy": 0.5,
-        "laser": 3
+        "laser": 6
     }
     health_map = {
         "player": 5,
         "enemy": 1
     }
-    mygame = MainGame(500, sprite_map, laser_map, speed_map, health_map, 5, "graphics/pixelated_space.jpg", 400, 600)
+    mygame = MainGame(600, sprite_map, laser_map, speed_map, health_map, 5, "graphics/pixelated_space.jpg", 400, 600)
     mygame.run_game()
+# TODO: make enemies shoot lasers
+# TODO: end game screen
