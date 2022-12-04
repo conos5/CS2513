@@ -158,23 +158,6 @@ class Ship(object):
         self._laser_image = laser_image_file_name
         self._blasts_array = []
 
-    # def draw(self, window):
-    #     window.blit(self._view, (self.x, self.y))  # draw ship
-    #     for laser in self._blasts_array:  # draw laser(/s)
-    #         laser.draw(window)
-    #
-    # def move_lasers(self, velocity, obj, ):
-    #     # self.cooldown()
-    #     for laser in self._blasts_array:
-    #         laser.move(velocity)  # velocity will be different for enemies and players
-    #         if laser.off_screen(self._max_y_pos):
-    #             self._blasts_array.remove(laser)
-    #         elif laser.collision(obj):
-    #             obj.health -= 10
-    #             self._blasts_array.remove(laser)
-    # @property
-    # def mask(self):
-    #     return self._mask
     @staticmethod
     def explosion_sound(volume):
         """
@@ -284,22 +267,6 @@ class Player(Ship):
                  sprite_lives: dict):
         super().__init__(pos, max_x_pos, max_y_pos, blast_cooldown, image_file_name,
                          laser_image_file_name, sprite_change, sprite_lives)
-        # self._pos = pos  # pos is a tuple of 2 values -> x_pos & y_pos
-        # self._x_pos = self._pos[0]
-        # self._y_pos = self._pos[1]
-        # self._max_x_pos = max_x_pos
-        # self._max_y_pos = max_y_pos
-        #
-        # self._can_shoot = True  # ready to fire, i.e reloaded
-        # self._blast_time = 0  # timer starts counting when laser blasted
-        # self._blast_cooldown = blast_cooldown  # x ms until next laser blast
-        #
-        # self._view = pygame.image.load(image_file_name).convert_alpha()
-        # self._mask = pygame.mask.from_surface(self._view)
-        # self._rect = self._view.get_rect(midbottom=pos)
-        #
-        # self._laser_image = laser_image_file_name
-        # self._blasts_array = []
 
     def user_input(self):
         """
@@ -359,17 +326,10 @@ class Player(Ship):
         :param entities: for checking collisions
         :return: none
         """
-        i = 0
-        while i < len(self._blasts_array):
-            self._blasts_array[i].movement(velocity)
-            if self._blasts_array[i].offscreen(self._max_y_pos):  # if laser goes off-screen, delete laser from array
-                self._blasts_array.remove(self._blasts_array[i])
-            i += 1
         for laser in self._blasts_array:
             laser.movement(velocity)  # velocity will be different for enemies and players
             if laser.offscreen(self._max_y_pos):  # if laser goes off-screen, delete laser from array
                 self._blasts_array.remove(laser)
-                # print(self._blasts_array())
             for entity in entities:
                 if laser.collision(entity):  # if laser collides with an object, remove from array
                     entity.lives -= 1
@@ -411,7 +371,6 @@ class Player(Ship):
         return self._rect
 
 
-# TODO: add music and sound effects for lasers, collisions and game over
 class MainGame(object):
     def __init__(self, blast_cooldown: int, sprite_img_file_name: dict, laser_img_file_name: dict,
                  speed: dict, lives: dict, enemy_limit: int, bg_img_file_name: str,
@@ -462,6 +421,7 @@ class MainGame(object):
         :param window: what display/window to update
         :return: none
         """
+        # load background
         self._display.blit(self._game_screen.bg, (0, 0))
         # draw text
         lives_counter = self._main_font.render(f"Lives: {self._player.lives}", 1, (0, 255, 0))  # lives in green
@@ -474,11 +434,13 @@ class MainGame(object):
 
         self._player.move_lasers(self._speed["laser"], self._enemies_array)
 
+        # draw enemies
         for enemy in self._enemies_array:
             enemy.draw(window)
             for laser in enemy.blasts_array:  # draw laser(/s)
                 laser.draw(window)
 
+        # Game Over Display
         if self._player.lives == 0:
             game_over_display = self._game_over_font.render(f"GAME OVER", 1, (255, 255, 255))  # level in blue
             self._display.blit(game_over_display, (60, 100))  # self._screen_height / 2
@@ -554,6 +516,7 @@ if __name__ == "__main__":
     }
     mygame = MainGame(600, sprite_map, laser_map, speed_map, lives_map, 5, "graphics/pixelated_space.jpg", 400, 600)
     mygame.run_game()
+
 """
 Here is my wave-based Space-Invaders style retro arcade game; fully equipped with the music and all :)
 Feel free to change around stuff like bullet cooldown, screen size, player/ enemy speed, life count etc.
@@ -561,6 +524,7 @@ Enjoy!
 Sources:
     Game Assets:
         https://opengameart.org/content/assets-for-a-space-invader-like-game - Author = Clear_code
+        Pixelated_space image edited image from Pixel Space to make the opacity less so fits into background better
     Audio:
         8-Bit Music:
             Myself... made it in my DAW with a few free 8-bit plugins for a bit of fun :)
