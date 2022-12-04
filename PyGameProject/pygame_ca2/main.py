@@ -84,7 +84,7 @@ class Laser(object):
     def movement(self, velocity: int):
         """
         laser move
-        :param velocity:
+        :param velocity: speed to travel at
         :return:
         """
         self._y_pos -= velocity
@@ -105,11 +105,22 @@ class Laser(object):
     def collision(self, obj):
         """
         Laser collision function
-        :param obj:
+        :param obj: object of collision
         :return: True or False
         """
         return collide(obj, self)
 
+    @staticmethod
+    def laser_noise(volume):
+        """
+        produce laser beam noise for both enemies and player
+            also star wars laser sound :)
+        :param volume: set volume for laser
+        :return: none
+        """
+        _laser_noise = pygame.mixer.Sound("audio/laser.mp3")
+        _laser_noise.set_volume(volume)
+        _laser_noise.play()
     # GETTERS
     @property
     def x_pos(self):
@@ -125,8 +136,8 @@ class Laser(object):
 
 
 class Ship(object):
-    def __init__(self, pos: tuple[int, int], max_x_pos: int, max_y_pos: int, blast_cooldown: int, image_file_name: str,
-                 laser_image_file_name: str, sprite_change: int, sprite_health: int):
+    def __init__(self, pos: tuple[int, int], max_x_pos: int, max_y_pos: int, blast_cooldown: int, image_file_name: dict,
+                 laser_image_file_name: str, sprite_change: dict, sprite_lives: dict):
         self._pos = pos  # pos is a tuple of 2 values -> x_pos & y_pos
         self._x_pos = self._pos[0]
         self._y_pos = self._pos[1]
@@ -134,7 +145,7 @@ class Ship(object):
         self._max_y_pos = max_y_pos
 
         self._change = sprite_change
-        self._health = sprite_health
+        self._lives = sprite_lives
 
         self._can_shoot = True  # ready to fire, i.e reloaded
         self._blast_time = 0  # timer starts counting when laser blasted
@@ -164,14 +175,22 @@ class Ship(object):
     # @property
     # def mask(self):
     #     return self._mask
+    @staticmethod
+    def explosion_sound(volume):
+        """
+        produce explosion sound on enemies dying
+        :return: none
+        """
+        _explosion_noise = pygame.mixer.Sound("audio/explosion.wav")
+        _explosion_noise.set_volume(volume)  # 0.05 for enemy
+        _explosion_noise.play()
 
 
-# TODO: enemies need to be able to shoot lasers
 class Enemy(Ship):
     def __init__(self, pos: tuple[int, int], max_x_pos: int, max_y_pos: int, blast_cooldown: int, image_file_name: str,
-                 laser_image_file_name: str, sprite_change: dict, sprite_health: dict):
+                 laser_image_file_name: str, sprite_change: dict, sprite_lives: dict):
         super().__init__(pos, max_x_pos, max_y_pos, blast_cooldown, image_file_name, laser_image_file_name,
-                         sprite_change, sprite_health)
+                         sprite_change, sprite_lives)
 
     def move(self, vel):
         """
@@ -206,30 +225,26 @@ class Enemy(Ship):
         :return: none
         """
         self._blasts_array.append(Laser((self._x_pos - 20, self._y_pos - 40), self._laser_image))
+        Laser.laser_noise(0.1)
 
-    def move_lasers(self, velocity, entities):
+    def move_lasers(self, velocity, entity):
         """
         Moves lasers on screen
         :param velocity: speed of lasers
-        :param entities: for checking collisions, namely player
+        :param entity: for checking collisions, namely player
         :return: none
         """
-        i = 0
-        while i < len(self._blasts_array):
-            self._blasts_array[i].movement(velocity)
-            if self._blasts_array[i].offscreen(self._max_y_pos):  # if laser goes off-screen, delete laser from array
-                self._blasts_array.remove(self._blasts_array[i])
-            i += 1
         for laser in self._blasts_array:
-            laser.movement(velocity)  # velocity will be different for enemies and players
+            laser.movement(-velocity)  # velocity will be different for enemies and players
             if laser.offscreen(self._max_y_pos):  # if laser goes off-screen, delete laser from array
                 self._blasts_array.remove(laser)
                 # print(self._blasts_array())
-            for entity in entities:
-                if laser.collision(entity):  # if laser collides with an object, remove from array
-                    entity.health -= 1
-                    if laser in self._blasts_array:
-                        self._blasts_array.remove(laser)
+            if laser.collision(entity):  # if laser collides with an object, remove from array
+                entity.lives -= 1
+                self.explosion_sound(0.02)
+                if laser in self._blasts_array:
+                    self._blasts_array.remove(laser)
+
     # GETTERS
     @property
     def x_pos(self):
@@ -244,12 +259,11 @@ class Enemy(Ship):
         return self._max_y_pos
 
     @property
-    def health(self):
-        return self._health
-
-    @health.setter
-    def health(self, health_set):
-        self._health = health_set
+    def lives(self):
+        return self._lives
+    @lives.setter
+    def lives(self, lives_set):
+        self._lives = lives_set
 
     @property
     def blasts_array(self):
@@ -266,10 +280,10 @@ class Enemy(Ship):
 
 class Player(Ship):
     def __init__(self, pos: tuple[int, int], max_x_pos: int, max_y_pos: int,
-                 blast_cooldown: int, image_file_name: str, laser_image_file_name: str, sprite_change: dict,
-                 sprite_health: dict):
+                 blast_cooldown: int, image_file_name: dict, laser_image_file_name: dict, sprite_change: dict,
+                 sprite_lives: dict):
         super().__init__(pos, max_x_pos, max_y_pos, blast_cooldown, image_file_name,
-                         laser_image_file_name, sprite_change, sprite_health)
+                         laser_image_file_name, sprite_change, sprite_lives)
         # self._pos = pos  # pos is a tuple of 2 values -> x_pos & y_pos
         # self._x_pos = self._pos[0]
         # self._y_pos = self._pos[1]
@@ -325,6 +339,7 @@ class Player(Ship):
         :return: none
         """
         self._blasts_array.append(Laser((self._x_pos - 20, self._y_pos - 40), self._laser_image))
+        Laser.laser_noise(0.3)
 
     def reloading(self):
         """
@@ -357,9 +372,10 @@ class Player(Ship):
                 # print(self._blasts_array())
             for entity in entities:
                 if laser.collision(entity):  # if laser collides with an object, remove from array
-                    entity.health -= 1
+                    entity.lives -= 1
                     if laser in self._blasts_array:
                         self._blasts_array.remove(laser)
+                        self.explosion_sound(0.05)
 
     # GETTERS
     @property
@@ -371,12 +387,12 @@ class Player(Ship):
         return self._y_pos
 
     @property
-    def health(self):
-        return self._health
+    def lives(self):
+        return self._lives
 
-    @health.setter
-    def health(self, health_set):
-        self._health = health_set
+    @lives.setter
+    def lives(self, lives_set):
+        self._lives = lives_set
 
     @property
     def blasts_array(self):
@@ -398,7 +414,7 @@ class Player(Ship):
 # TODO: add music and sound effects for lasers, collisions and game over
 class MainGame(object):
     def __init__(self, blast_cooldown: int, sprite_img_file_name: dict, laser_img_file_name: dict,
-                 speed: dict, health: dict, enemy_limit: int, bg_img_file_name: str,
+                 speed: dict, lives: dict, enemy_limit: int, bg_img_file_name: str,
                  screen_width: int, screen_height: int):
         pygame.init()
         pygame.font.init()
@@ -417,23 +433,24 @@ class MainGame(object):
         self._enemies_array = []
         self.wave_length = 5
         self._level = 0
-        self._lives = 5
+        self._lives = lives
         self._blast_cooldown = blast_cooldown
         self._speed = speed
-        self._health = health
 
         # Text Setup
         self._main_font = pygame.font.SysFont("futura", 30)  # font style and size
+        self._game_over_font = pygame.font.SysFont("futura", 50)  # font style and size
 
         # Audio Setup
         self._music = pygame.mixer.Sound("audio/8-bitMusic.mp3")
-        self._music.set_volume(1)
+        # extra marks for making the music? :)
+        self._music.set_volume(0.8)
         self._music.play(loops=-1)
 
         # Player Instance
         self._player = Player(((self._screen_width / 2 - 20), (self._screen_height - 40)), self._screen_width,
                               self._screen_height, self._blast_cooldown, self._sprite_img_file_name["player"],
-                              self._laser_img_file_name["player"], self._speed["player"], self._health["player"])
+                              self._laser_img_file_name["player"], self._speed["player"], self._lives["player"])
 
         # Clock for FPS
         self._clock = pygame.time.Clock()
@@ -447,7 +464,7 @@ class MainGame(object):
         """
         self._display.blit(self._game_screen.bg, (0, 0))
         # draw text
-        lives_counter = self._main_font.render(f"Lives: {self._lives}", 1, (0, 255, 0))  # lives in green
+        lives_counter = self._main_font.render(f"Lives: {self._player.lives}", 1, (0, 255, 0))  # lives in green
         level_counter = self._main_font.render(f"Level: {self._level}", 1, (0, 0, 255))  # level in blue
         self._display.blit(lives_counter, (20, 20))
         self._display.blit(level_counter, (self._screen_width - 120, 20))
@@ -459,6 +476,13 @@ class MainGame(object):
 
         for enemy in self._enemies_array:
             enemy.draw(window)
+            for laser in enemy.blasts_array:  # draw laser(/s)
+                laser.draw(window)
+
+        if self._player.lives == 0:
+            game_over_display = self._game_over_font.render(f"GAME OVER", 1, (255, 255, 255))  # level in blue
+            self._display.blit(game_over_display, (60, 100))  # self._screen_height / 2
+            self._playing = False
 
         window.blit(self._player.view, (self._player.x_pos, self._player.y_pos))  # draw ship
 
@@ -468,7 +492,7 @@ class MainGame(object):
         :return: none
         """
         FPS = 60  # let's set our FPS to 60; standard FPS rate for Video Games
-        while self._playing:
+        while True:
             self._clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -477,33 +501,35 @@ class MainGame(object):
             pygame.display.update()
 
             self._player.update()
-            if len(self._enemies_array) == 0:
-                self._level += 1
-                self.wave_length += 1
-                for i in range(self.wave_length):
-                    rand_x = random.randrange(20, self._screen_width - 60)
-                    rand_y = random.randrange(-1000, -100)
-                    enemy = Enemy((rand_x, rand_y), self._screen_width, self._screen_height, self._blast_cooldown,
-                                  self._sprite_img_file_name["enemy"], self._laser_img_file_name["enemy"],
-                                  self._speed["enemy"], self._health["enemy"])
-                    self._enemies_array.append(enemy)
-            for enemy in self._enemies_array[:]:
-                if enemy.health > 0:
-                    enemy.move(self._speed["enemy"]+(0.2*self._level))
-                    # print(len(self._enemies_array))
-                    if enemy.y_pos > enemy.max_y_pos:
-                        self._lives -= 1
-                        # print(self._lives)
+            if self._playing:
+                if len(self._enemies_array) == 0:
+                    self._level += 1
+                    self.wave_length += 1
+                    for i in range(self.wave_length):
+                        rand_x = random.randrange(20, self._screen_width - 60)
+                        rand_y = random.randrange(-800, -100)
+                        enemy = Enemy((rand_x, rand_y), self._screen_width, self._screen_height, self._blast_cooldown,
+                                      self._sprite_img_file_name["enemy"], self._laser_img_file_name["enemy"],
+                                      self._speed["enemy"], self._lives["enemy"])
+                        self._enemies_array.append(enemy)
+                for enemy in self._enemies_array[:]:
+                    if enemy.lives > 0:
+                        enemy.move(self._speed["enemy"]+(0.2*self._level))
+                        if enemy.y_pos > 0:
+                            if random.randrange(0, 200) == 1:
+                                enemy.blast_laser()
+                        enemy.move_lasers(self._speed["laser"], self._player)
+                        # print(len(self._enemies_array))
+                        if enemy.y_pos > enemy.max_y_pos:
+                            self._player.lives -= 1
+                            # print(self._lives)
+                            self._enemies_array.remove(enemy)
+                            print(len(self._enemies_array))
+                        elif collide(enemy, self._player):
+                            self._player.lives -= 1
+                            self._enemies_array.remove(enemy)
+                    else:
                         self._enemies_array.remove(enemy)
-                        print(len(self._enemies_array))
-                    elif collide(enemy, self._player):
-                        self._lives -= 1
-                        self._player.health -= 1
-                        self._enemies_array.remove(enemy)
-                else:
-                    self._enemies_array.remove(enemy)
-            if self._lives == 0:
-                self._playing = False  # crashes game... want to make an end game screen
 
             self.window_draw(self._display)
 
@@ -522,11 +548,25 @@ if __name__ == "__main__":
         "enemy": 0.5,
         "laser": 6
     }
-    health_map = {
+    lives_map = {
         "player": 5,
         "enemy": 1
     }
-    mygame = MainGame(600, sprite_map, laser_map, speed_map, health_map, 5, "graphics/pixelated_space.jpg", 400, 600)
+    mygame = MainGame(600, sprite_map, laser_map, speed_map, lives_map, 5, "graphics/pixelated_space.jpg", 400, 600)
     mygame.run_game()
-# TODO: make enemies shoot lasers
-# TODO: end game screen
+"""
+Here is my wave-based Space-Invaders style retro arcade game; fully equipped with the music and all :)
+Feel free to change around stuff like bullet cooldown, screen size, player/ enemy speed, life count etc.
+Enjoy!
+Sources:
+    Game Assets:
+        https://opengameart.org/content/assets-for-a-space-invader-like-game - Author = Clear_code
+    Audio:
+        8-Bit Music:
+            Myself... made it in my DAW with a few free 8-bit plugins for a bit of fun :)
+        Explosion Sound:
+            Found a stock explosion sound on the internet
+        Laser Sound:
+            https://www.youtube.com/watch?v=fl0wIdGxfbQ - 'Star Wars blasters sound effect. How they did it'
+            Edited this YouTube video of a guy making the Star Wars laser sound with a wire and a spanner in DAW
+"""
