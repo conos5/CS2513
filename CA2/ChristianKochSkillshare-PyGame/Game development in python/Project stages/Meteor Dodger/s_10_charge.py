@@ -103,7 +103,7 @@ score = 0
 laser_timer = 0
 laser_active = False
 
-spaceship = SpaceShip('spaceship.png',640,500)
+spaceship = SpaceShip('spaceship.png', 640, 500)
 spaceship_group = pygame.sprite.GroupSingle()
 spaceship_group.add(spaceship)
 
@@ -120,7 +120,7 @@ while True: # Game loop
 			sys.exit()
 
 		if event.type == pygame.MOUSEBUTTONDOWN and laser_active:
-			new_laser = Laser('Laser.png',event.pos,15)
+			new_laser = Laser('Laser.png', event.pos, 15)
 			laser_group.add(new_laser)
 			laser_active = False
 			laser_timer = pygame.time.get_ticks()

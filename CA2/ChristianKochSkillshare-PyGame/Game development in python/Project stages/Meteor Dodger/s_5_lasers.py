@@ -44,7 +44,7 @@ pygame.init() # initiate pygame
 screen = pygame.display.set_mode((1280,720)) # Create display surface
 clock = pygame.time.Clock() # Create clock object
 
-spaceship = SpaceShip('spaceship.png',640,500,10)
+spaceship = SpaceShip('spaceship.png', 640, 500, 10)
 spaceship_group = pygame.sprite.GroupSingle()
 spaceship_group.add(spaceship)
 
@@ -61,7 +61,7 @@ while True: # Game loop
 			sys.exit()
 
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			new_laser = Laser('Laser.png',spaceship_group.sprite.rect.center,10)
+			new_laser = Laser('Laser.png', spaceship_group.sprite.rect.center, 10)
 			laser_group.add(new_laser)
 		if event.type == METEOR_EVENT:
 			random_meteor_image = random.choice(('Meteor1.png','Meteor2.png','Meteor3.png'))

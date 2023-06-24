@@ -69,18 +69,24 @@ def main_game():
 	for laser in laser_group:
 		pygame.sprite.spritecollide(laser,meteor_group,True)
 
+	return 1
+
 def end_game():
 	text_surface = game_font.render('Game Over',True,(255,255,255))
-	text_rect = text_surface.get_rect(center = (640,360))
+	text_rect = text_surface.get_rect(center = (640,340))
 	screen.blit(text_surface,text_rect)
+
+	score_surface = game_font.render(f'Score: {score}',True,(255,255,255))
+	score_rect = score_surface.get_rect(center = (640,380))
+	screen.blit(score_surface,score_rect)
 
 pygame.init() # initiate pygame
 screen = pygame.display.set_mode((1280,720)) # Create display surface
 clock = pygame.time.Clock() # Create clock object
 game_font = pygame.font.Font(None,40)
+score = 0
 
-
-spaceship = SpaceShip('spaceship.png',640,500)
+spaceship = SpaceShip('spaceship.png', 640, 500)
 spaceship_group = pygame.sprite.GroupSingle()
 spaceship_group.add(spaceship)
 
@@ -97,8 +103,13 @@ while True: # Game loop
 			sys.exit()
 
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			new_laser = Laser('Laser.png',event.pos,15)
+			new_laser = Laser('Laser.png', event.pos, 15)
 			laser_group.add(new_laser)
+
+		if event.type == pygame.MOUSEBUTTONDOWN and spaceship_group.sprite.health <= 0:
+			spaceship_group.sprite.health = 5
+			meteor_group.empty()
+			score = 0
 
 		if event.type == METEOR_EVENT:
 			random_meteor_image = random.choice(('Meteor1.png','Meteor2.png','Meteor3.png'))
@@ -111,7 +122,7 @@ while True: # Game loop
 
 	screen.fill((42,45,51))
 	if spaceship_group.sprite.health > 0:
-		main_game()
+		score += main_game()
 	else:
 		end_game()
 

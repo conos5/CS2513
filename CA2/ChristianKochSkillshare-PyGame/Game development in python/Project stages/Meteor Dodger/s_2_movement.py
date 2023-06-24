@@ -21,7 +21,7 @@ pygame.init() # initiate pygame
 screen = pygame.display.set_mode((1280,720)) # Create display surface
 clock = pygame.time.Clock() # Create clock object
 
-spaceship = SpaceShip('spaceship.png',640,500,10)
+spaceship = SpaceShip('spaceship.png', 640, 500, 10)
 spaceship_group = pygame.sprite.GroupSingle()
 spaceship_group.add(spaceship)
 

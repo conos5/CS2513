@@ -1,17 +1,17 @@
-import pygame,sys,random
+import pygame, sys,random
 
 class SpaceShip(pygame.sprite.Sprite):
 	def __init__(self,path,x_pos,y_pos):
 		super().__init__()
 		self.image = pygame.image.load(path)
 		self.rect = self.image.get_rect(center = (x_pos,y_pos))
-		self.shield_surface = pygame.image.load('shield.png')
-		self.health = 5
+		self.shields = 5
+		self.shield_image = pygame.image.load('shield_silver.png')
 
 	def update(self):
 		self.rect.center = pygame.mouse.get_pos()
 		self.screen_constrain()
-		self.display_health()
+		self.display_shields()
 
 	def screen_constrain(self):
 		if self.rect.right >= 1280:
@@ -19,12 +19,11 @@ class SpaceShip(pygame.sprite.Sprite):
 		if self.rect.left <= 0:
 			self.rect.left = 0
 
-	def display_health(self):
-		for index,shield in enumerate(range(self.health)):
-			screen.blit(self.shield_surface,(10 + index * 40 ,10))
+	def display_shields(self):
+		for index,shield in enumerate(range(self.shields)):
+			screen.blit(self.shield_image,(10 + index * 40,10))
 
-	def get_damage(self,damage_amount):
-		self.health -= damage_amount
+
 
 class Meteor(pygame.sprite.Sprite):
 	def __init__(self,path,x_pos,y_pos,x_speed,y_speed):
@@ -53,40 +52,11 @@ class Laser(pygame.sprite.Sprite):
 		if self.rect.centery <= -100:
 			self.kill()
 
-def main_game():
-	laser_group.draw(screen)
-	spaceship_group.draw(screen)
-	meteor_group.draw(screen)
-
-	laser_group.update()
-	spaceship_group.update()
-	meteor_group.update()
-
-	# Collision 
-	if pygame.sprite.spritecollide(spaceship_group.sprite,meteor_group,True):
-		spaceship_group.sprite.get_damage(1)
-
-	for laser in laser_group:
-		pygame.sprite.spritecollide(laser,meteor_group,True)
-
-	return 1
-
-def end_game():
-	text_surface = game_font.render('Game Over',True,(255,255,255))
-	text_rect = text_surface.get_rect(center = (640,340))
-	screen.blit(text_surface,text_rect)
-
-	score_surface = game_font.render(f'Score: {score}',True,(255,255,255))
-	score_rect = score_surface.get_rect(center = (640,380))
-	screen.blit(score_surface,score_rect)
-
 pygame.init() # initiate pygame
 screen = pygame.display.set_mode((1280,720)) # Create display surface
 clock = pygame.time.Clock() # Create clock object
-game_font = pygame.font.Font(None,40)
-score = 0
 
-spaceship = SpaceShip('spaceship.png',640,500)
+spaceship = SpaceShip('spaceship.png', 640, 500)
 spaceship_group = pygame.sprite.GroupSingle()
 spaceship_group.add(spaceship)
 
@@ -103,14 +73,9 @@ while True: # Game loop
 			sys.exit()
 
 		if event.type == pygame.MOUSEBUTTONDOWN:
-			new_laser = Laser('Laser.png',event.pos,15)
+			new_laser = Laser('Laser.png', spaceship_group.sprite.rect.center, 15)
 			laser_group.add(new_laser)
-
-		if event.type == pygame.MOUSEBUTTONDOWN and spaceship_group.sprite.health <= 0:
-			spaceship_group.sprite.health = 5
-			meteor_group.empty()
-			score = 0
-
+			
 		if event.type == METEOR_EVENT:
 			random_meteor_image = random.choice(('Meteor1.png','Meteor2.png','Meteor3.png'))
 			random_x_pos = random.randrange(0,1280)
@@ -121,10 +86,14 @@ while True: # Game loop
 			meteor_group.add(meteor)
 
 	screen.fill((42,45,51))
-	if spaceship_group.sprite.health > 0:
-		score += main_game()
-	else:
-		end_game()
+	
+	laser_group.draw(screen)
+	spaceship_group.draw(screen)
+	meteor_group.draw(screen)
+
+	laser_group.update()
+	spaceship_group.update()
+	meteor_group.update()
 
 	pygame.display.update() # Draw frame
 	clock.tick(120) # Control the framerate

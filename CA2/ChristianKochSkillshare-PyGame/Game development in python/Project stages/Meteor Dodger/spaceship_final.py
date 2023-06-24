@@ -110,7 +110,7 @@ game_state = 'Main'
 game_score = 0
 game_font = pygame.font.Font(None,80)
 
-spaceship = SpaceShip("spaceship.png",640,600,5)
+spaceship = SpaceShip("spaceship.png", 640, 600, 5)
 player = pygame.sprite.GroupSingle()
 player.add(spaceship)
 
@@ -136,7 +136,7 @@ while True:
 				spaceship.movement -= spaceship.speed
 
 			if event.key == pygame.K_SPACE and laser_ready:
-				laser_group.add(Laser('Laser.png',spaceship.rect.center,15))
+				laser_group.add(Laser('Laser.png', spaceship.rect.center, 15))
 				laser_ready = False
 				laser_shot = pygame.time.get_ticks()
 				spaceship.uncharge()
